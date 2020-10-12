@@ -299,7 +299,7 @@ let config = {
       gravity: {
         y: 1000
       },
-      debug: true
+      debug: false
     }
   }
 };
