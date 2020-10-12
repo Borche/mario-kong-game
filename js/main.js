@@ -109,13 +109,13 @@ gameScene.update = function () {
   // are we on the ground?
   let onGround = this.player.body.blocked.down || this.player.body.touching.down;
 
-  if (this.cursors.left.isDown) {
+  if (this.cursors.left.isDown && !this.cursors.right.isDown) {
     this.player.body.setVelocityX(-this.playerSpeed);
 
     this.player.flipX = false;
 
     if (onGround && !this.player.anims.isPlaying) this.player.anims.play('walking');
-  } else if (this.cursors.right.isDown) {
+  } else if (this.cursors.right.isDown && !this.cursors.left.isDown) {
     this.player.body.setVelocityX(this.playerSpeed);
 
     this.player.flipX = true;
