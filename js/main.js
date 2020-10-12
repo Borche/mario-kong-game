@@ -62,22 +62,27 @@ gameScene.create = function () {
     });
   }
 
-  // world bounds
-  this.physics.world.bounds.width = 360;
-  this.physics.world.bounds.height = 700;
-
   // add all level elements
   this.setupLevel();
 
+  // initiate barrel spawner
+  this.setupSpawner();
+
   // camera bounds
-  this.cameras.main.setBounds(0, 0, 360, 700);
+  this.cameras.main.setBounds(0, 0, this.levelData.world.width, this.levelData.world.height);
   this.cameras.main.startFollow(this.player);
 
   // collision
-  this.physics.add.collider([this.player, this.goal], this.platforms);
+  this.physics.add.collider([this.player, this.goal, this.barrels], this.platforms);
 
   // overlap checks
-  this.physics.add.overlap(this.player, [this.fires, this.goal], this.restartGame, null, this);
+  this.physics.add.overlap(
+    this.player,
+    [this.fires, this.goal, this.barrels],
+    this.restartGame,
+    null,
+    this
+  );
 
   // disable gravity
   // this.ground.body.allowGravity = false;
@@ -141,6 +146,10 @@ gameScene.update = function () {
 gameScene.setupLevel = function () {
   // load json data
   this.levelData = this.cache.json.get('levelData');
+
+  // world bounds
+  this.physics.world.bounds.width = this.levelData.world.width;
+  this.physics.world.bounds.height = this.levelData.world.height;
 
   // create all platforms - staticGroup more efficient for statics
   this.platforms = this.physics.add.staticGroup();
@@ -225,6 +234,55 @@ gameScene.restartGame = function (sourceSprite, targetprite) {
     },
     this
   );
+};
+
+gameScene.setupSpawner = function () {
+  // barrel group
+  this.barrels = this.physics.add.group({
+    bounceY: 0.1,
+    bounceX: 1,
+    collideWorldBounds: true
+  });
+
+  // spawn barrels
+  let spawningEvent = this.time.addEvent({
+    delay: this.levelData.spawner.interval,
+    loop: true,
+    callbackScope: this,
+    callback: function () {
+      // create a barrel without object pool
+      // let barrel = this.barrels.create(this.goal.x, this.goal.y, 'barrel');
+
+      // create object with oobject pool
+      let barrel = this.barrels.get(this.goal.x, this.goal.y, 'barrel');
+
+      // reactivate (object pooling)
+      barrel.setActive(true);
+      barrel.setVisible(true);
+      barrel.body.enable = true;
+
+      // set properties
+      barrel.setVelocityX(this.levelData.spawner.speed);
+
+      // display how many objects are in the pool
+      //console.log(this.barrels.getChildren().length);
+
+      // duration
+      this.time.addEvent({
+        delay: this.levelData.spawner.lifespan,
+        repeat: 0,
+        callbackScope: this,
+        callback: function () {
+          // destroy barrel when no object pool
+          // barrel.destroy();
+
+          // object pool active - hide and disable barrel
+          this.barrels.killAndHide(barrel);
+          barrel.body.enable = false;
+        }
+      });
+    }
+  });
 };
 
 // our game's configuration
